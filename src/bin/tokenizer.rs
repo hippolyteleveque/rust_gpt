@@ -1,5 +1,7 @@
 use regex::Regex;
+use std::collections::{HashSet, HashMap};
 use std::fs;
+use rust_gpt::tokenizer::SimpleTokenizerV1;
 
 fn main() {
     let file_content =
@@ -41,4 +43,36 @@ fn main() {
 
     println!("Num tokens find in the text: {}", preprocessed.len());
     println!("The 30 first tokens are: {:?}", &preprocessed[..30]);
+
+    let set: HashSet<&str> = preprocessed.drain(..).collect();
+    let mut preprocessed: Vec<&str> = set.into_iter().collect();
+    preprocessed.sort();
+
+    println!("Num unique tokens find in the text: {}", preprocessed.len());
+
+    let mut vocab = HashMap::new();
+
+    for (ix, el) in preprocessed.iter().enumerate() {
+        vocab.insert(el.to_string(), ix);
+    }
+    let mut i = 0;
+
+    // for (key, value) in &vocab {
+    //     println!("{key}: {value}");
+    //     i += 1;
+    //     if i > 50 {
+    //        break;
+    //     }
+    // } 
+
+
+    let  tokenizer = SimpleTokenizerV1::new(vocab);
+    let text = "It's the last he painted, you know,\" Mrs. Gisburn said with pard";
+    // let text = "I HAD always thought Jack Gisburn rather";
+    let ids = tokenizer.encode(text);
+    println!("{ids:?}");
+    let decoded = tokenizer.decode(ids);
+    println!("{decoded}");
+
+
 }
