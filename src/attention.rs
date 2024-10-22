@@ -1,6 +1,6 @@
 use candle_core::{Device, Result, Tensor};
-use candle_nn::Module;
 use candle_nn::ops;
+use candle_nn::{Linear, Module};
 
 pub fn softmax_naive(t: &Tensor) -> Result<Tensor> {
     // naive implementation of softmax
@@ -31,6 +31,38 @@ impl Module for SelfAttentionV1 {
         let k = xs.matmul(&self.wk)?;
         let v = xs.matmul(&self.wv)?;
 
+        let tmp = q.matmul(&k.transpose(0, 1).unwrap())?;
+        let tmp = ops::softmax(&tmp, 1)?;
+        let tmp = (tmp / (self.d_out as f64).powf(0.5))?;
+        let out = tmp.matmul(&v).unwrap();
+        Ok(out)
+    }
+}
+
+pub struct SelfAttentionV2 {
+    d_out: usize,
+    q: Linear,
+    v: Linear,
+    k: Linear,
+}
+
+impl SelfAttentionV2 {
+    pub fn new(d_in: usize, d_out: usize) -> SelfAttentionV2 {
+        let wq = Tensor::randn(0f64, 1f64, (d_in, d_out), &Device::Cpu).unwrap();
+        let wv = Tensor::randn(0f64, 1f64, (d_in, d_out), &Device::Cpu).unwrap();
+        let wk = Tensor::randn(0f64, 1f64, (d_in, d_out), &Device::Cpu).unwrap();
+        let q = Linear::new(wq, None);
+        let v = Linear::new(wv, None);
+        let k = Linear::new(wk, None);
+        SelfAttentionV2 { d_out, q, v, k }
+    }
+}
+
+impl Module for SelfAttentionV2 {
+    fn forward(&self, xs: &Tensor) -> Result<Tensor> {
+        let q = self.q.forward(xs)?;
+        let v = self.v.forward(xs)?;
+        let k = self.k.forward(xs)?;
         let tmp = q.matmul(&k.transpose(0, 1).unwrap())?;
         let tmp = ops::softmax(&tmp, 1)?;
         let tmp = (tmp / (self.d_out as f64).powf(0.5))?;
