@@ -1,6 +1,6 @@
-use candle_core::{Device, Tensor};
-use rust_gpt::attention;
+use candle_core::{Device, Module, Tensor};
 use candle_nn::ops;
+use rust_gpt::attention::{self, SelfAttentionV1};
 
 fn main() {
     let device = Device::Cpu;
@@ -9,12 +9,14 @@ fn main() {
         0.05, 0.80, 0.55,
     ];
     let inputs = Tensor::from_vec(inputs, (6, 3), &device).unwrap();
-    let attn = inputs.matmul(&inputs.transpose(0,1).unwrap()).unwrap();
+    let attn = inputs.matmul(&inputs.transpose(0, 1).unwrap()).unwrap();
     // println!("{attn}");
 
     let sum_lines = attn.sum_keepdim(0).unwrap();
     // println!("{sum_lines}");
-    let attn_weights = attn.broadcast_div(&sum_lines.transpose(0, 1).unwrap()).unwrap();
+    let attn_weights = attn
+        .broadcast_div(&sum_lines.transpose(0, 1).unwrap())
+        .unwrap();
     // println!("{attn_weights}");
 
     let attn_weights_softmax = attention::softmax_naive(&attn).unwrap();
@@ -24,5 +26,27 @@ fn main() {
     // println!("{attn_weights}");
 
     let ctx_vec = attn_weights.matmul(&inputs).unwrap();
-    println!("{ctx_vec}");
+    // println!("{ctx_vec}");
+
+    let d_in = inputs.shape().dims()[1];
+    let d_out: usize = 2;
+    let mut Wq = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
+    let mut Wk = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
+    let mut Wv = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
+
+    let Q = inputs.matmul(&Wq).unwrap();
+    let K = inputs.matmul(&Wk).unwrap();
+    let V = inputs.matmul(&Wv).unwrap();
+
+    let tmp = Q.matmul(&K.transpose(0, 1).unwrap()).unwrap();
+    let tmp = ops::softmax(&tmp, 1).unwrap();
+    let tmp = (tmp / (d_out as f64).powf(0.5)).unwrap();
+    let out = tmp.matmul(&V).unwrap();
+
+    println!("{out}");
+
+    let attn_layer = SelfAttentionV1::new(d_in, d_out);
+    let out = attn_layer.forward(&inputs).unwrap();
+
+    println!("{out}");
 }
