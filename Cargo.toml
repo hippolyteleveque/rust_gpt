@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ai-dataloader = "0.6.2"
 candle-core = "0.7.2"
+candle-datasets = "0.7.2"
+candle-nn = "0.7.2"
 regex = "1"
 tiktoken-rs = "0.6.0"

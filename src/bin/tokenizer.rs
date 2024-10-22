@@ -1,4 +1,5 @@
 use regex::Regex;
+use rust_gpt::dataset::create_dataloader_v1;
 use rust_gpt::tokenizer::{SimpleTokenizerV1, SimpleTokenizerV2};
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -58,7 +59,7 @@ fn main() {
     for (ix, el) in preprocessed.iter().enumerate() {
         vocab.insert(el.to_string(), ix);
     }
-    let mut i = 0;
+    let i = 0;
 
     // for (key, value) in &vocab {
     //     println!("{key}: {value}");
@@ -100,20 +101,42 @@ fn main() {
     println!("{strings:?}");
 
     let file_content =
-        fs::read_to_string("./data/the-verdict.txt").expect("The file should be present");
-    
+        fs::read_to_string("./data/the-verdict.txt").expect("the file should be present");
+
     let encoded_file = bpe.encode_with_special_tokens(&file_content[..]);
     println!("Number of tokens: {}", encoded_file.len());
     let sample = &encoded_file[..50];
     let context_size = 4;
     let x = &sample[..context_size];
-    let y = &sample[1..context_size+1];
+    let y = &sample[1..context_size + 1];
     println!("x={x:?}\ny={y:?}");
 
-    for i in 1..context_size+1 {
-        let context = &sample[..i];
-        let desired = sample[i];
+    // for i in 1..context_size+1 {
+    //     let context = &sample[..i];
+    //     let desired = sample[i];
 
-        println!("{:?} -----> {:?}", bpe.decode(context.to_vec()).unwrap(), bpe.decode(vec![desired]).unwrap());
+    //     println!("{:?} -----> {:?}", bpe.decode(context.to_vec()).unwrap(), bpe.decode(vec![desired]).unwrap());
+    // }
+    let file_content =
+        fs::read_to_string("./data/the-verdict.txt").expect("the file should be present");
+
+    let mut dataloader = create_dataloader_v1(&file_content, Some(1), Some(4), Some(1), None, None);
+    // for res in dataloader {
+    //     match res {
+    //         Ok((inputs, targets)) => {
+    //             println!("{inputs:?}, {targets:?}");
+    //         }
+    //         _ => {
+    //             println!("Something went wrong")
+    //         }
+    //     }
+    //     // println!("Input: {input}\nTarget: {target}");
+    // }
+
+    if let Some(Ok((inputs, targets))) = dataloader.next() {
+        // println!("{inputs:?}, {targets:?}");
+        println!("inputs: {}\n outputs: {}", inputs, targets);
     }
+
+
 }
