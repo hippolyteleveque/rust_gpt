@@ -138,5 +138,4 @@ fn main() {
         println!("inputs: {}\n outputs: {}", inputs, targets);
     }
 
-
 }

@@ -24,10 +24,12 @@ impl GPTDatasetV1 {
             let input_chunk = &token_ids[i..i + max_length];
             let target_chunk = &token_ids[i + 1..i + max_length + 1];
             input_ids.push(
-                Tensor::from_vec(input_chunk.to_vec(), (1, max_length), &Device::Cpu).unwrap(),
+                // Tensor::from_vec(input_chunk.to_vec(), (1, max_length), &Device::Cpu).unwrap(),
+                Tensor::from_vec(input_chunk.to_vec(), (max_length), &Device::Cpu).unwrap(),
             );
             target_ids.push(
-                Tensor::from_vec(target_chunk.to_vec(), (1, max_length), &Device::Cpu).unwrap(),
+                // Tensor::from_vec(target_chunk.to_vec(), (1, max_length), &Device::Cpu).unwrap(),
+                Tensor::from_vec(target_chunk.to_vec(), (max_length), &Device::Cpu).unwrap(),
             );
             i += stride;
         }
