@@ -1,5 +1,6 @@
 use candle_core::{Device, Tensor};
 use rust_gpt::attention;
+use candle_nn::ops;
 
 fn main() {
     let device = Device::Cpu;
@@ -12,10 +13,16 @@ fn main() {
     // println!("{attn}");
 
     let sum_lines = attn.sum_keepdim(0).unwrap();
-    println!("{sum_lines}");
+    // println!("{sum_lines}");
     let attn_weights = attn.broadcast_div(&sum_lines.transpose(0, 1).unwrap()).unwrap();
-    println!("{attn_weights}");
+    // println!("{attn_weights}");
 
     let attn_weights_softmax = attention::softmax_naive(&attn).unwrap();
-    println!("{attn_weights_softmax}");
+    // println!("{attn_weights_softmax}");
+
+    let attn_weights = ops::softmax(&attn, 1).unwrap();
+    // println!("{attn_weights}");
+
+    let ctx_vec = attn_weights.matmul(&inputs).unwrap();
+    println!("{ctx_vec}");
 }
