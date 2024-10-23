@@ -48,9 +48,10 @@ pub struct SelfAttentionV2 {
 
 impl SelfAttentionV2 {
     pub fn new(d_in: usize, d_out: usize) -> SelfAttentionV2 {
-        let wq = Tensor::randn(0f64, 1f64, (d_in, d_out), &Device::Cpu).unwrap();
-        let wv = Tensor::randn(0f64, 1f64, (d_in, d_out), &Device::Cpu).unwrap();
-        let wk = Tensor::randn(0f64, 1f64, (d_in, d_out), &Device::Cpu).unwrap();
+        // Be careful to transpose size of the the shape when applying forward
+        let wq = Tensor::randn(0f64, 1f64, (d_out, d_in), &Device::Cpu).unwrap();
+        let wv = Tensor::randn(0f64, 1f64, (d_out, d_in), &Device::Cpu).unwrap();
+        let wk = Tensor::randn(0f64, 1f64, (d_out, d_in), &Device::Cpu).unwrap();
         let q = Linear::new(wq, None);
         let v = Linear::new(wv, None);
         let k = Linear::new(wk, None);
@@ -63,7 +64,7 @@ impl Module for SelfAttentionV2 {
         let q = self.q.forward(xs)?;
         let v = self.v.forward(xs)?;
         let k = self.k.forward(xs)?;
-        let tmp = q.matmul(&k.transpose(0, 1).unwrap())?;
+        let tmp = q.matmul(&k.transpose(0, 1)?)?;
         let tmp = ops::softmax(&tmp, 1)?;
         let tmp = (tmp / (self.d_out as f64).powf(0.5))?;
         let out = tmp.matmul(&v).unwrap();

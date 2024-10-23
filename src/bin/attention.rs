@@ -1,6 +1,6 @@
 use candle_core::{Device, Module, Tensor};
 use candle_nn::ops;
-use rust_gpt::attention::{self, SelfAttentionV1};
+use rust_gpt::attention::{self, SelfAttentionV1, SelfAttentionV2};
 
 fn main() {
     let device = Device::Cpu;
@@ -49,4 +49,15 @@ fn main() {
     let out = attn_layer.forward(&inputs).unwrap();
 
     println!("{out}");
+    let attn_layer = SelfAttentionV2::new(d_in, d_out);
+    let out = attn_layer.forward(&inputs).unwrap();
+    println!("{out}");
+
+
+    let triu = Tensor::triu2(d_out, candle_core::DType::F64, &device).unwrap();
+    let tril = Tensor::tril2(d_out, candle_core::DType::F64, &device).unwrap();
+    println!("{triu}\n{tril}");
+    let inf = (triu * std::f64::INFINITY).unwrap();
+    println!("{inf}");
+
 }
