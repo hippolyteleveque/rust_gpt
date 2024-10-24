@@ -1,6 +1,6 @@
 use candle_core::{Device, Module, Tensor};
 use candle_nn::ops;
-use rust_gpt::attention::{self, SelfAttentionV1, SelfAttentionV2};
+use rust_gpt::attention::{self, CausalSelfAttention, SelfAttentionV1, SelfAttentionV2};
 
 fn main() {
     let device = Device::Cpu;
@@ -43,21 +43,44 @@ fn main() {
     let tmp = (tmp / (d_out as f64).powf(0.5)).unwrap();
     let out = tmp.matmul(&V).unwrap();
 
-    println!("{out}");
+    // println!("{out}");
 
     let attn_layer = SelfAttentionV1::new(d_in, d_out);
     let out = attn_layer.forward(&inputs).unwrap();
-
-    println!("{out}");
+// 
+    // println!("{out}");
     let attn_layer = SelfAttentionV2::new(d_in, d_out);
     let out = attn_layer.forward(&inputs).unwrap();
+    // println!("{out}");
+
+    let tril = Tensor::tril2(6, candle_core::DType::F64, &device).unwrap();
+
+    // Causal attention
+    let xs = inputs;
+    let q = xs.matmul(&Wq).unwrap();
+    let k = xs.matmul(&Wk).unwrap();
+    let v = xs.matmul(&Wv).unwrap();
+
+    let tmp = q.matmul(&k.transpose(0, 1).unwrap()).unwrap();
+    let tmp = (tmp / (d_out as f64).powf(0.5)).unwrap();
+    let tmp = ops::softmax(&tmp, 1).unwrap();
+
+    // println!("{tmp}");
+    // let sum_rows = tmp.sum(1).unwrap();
+    // println!("{sum_rows}");
+
+    let tmp = (tmp * tril).unwrap();
+    let sum_rows = tmp.sum_keepdim(1).unwrap();
+    let tmp = tmp.broadcast_div(&sum_rows).unwrap();
+    // println!("{tmp}");
+    let sum_rows = tmp.sum(1).unwrap();
+    // println!("{sum_rows}");
+
+    let tmp = ops::dropout(&tmp, 0.5f32).unwrap();
+
+    // println!("{tmp}");
+
+    let causal_attention = CausalSelfAttention::new(d_in, d_out, 6, 0.5, false);
+    let out = causal_attention.forward(&xs).unwrap();
     println!("{out}");
-
-
-    let triu = Tensor::triu2(d_out, candle_core::DType::F64, &device).unwrap();
-    let tril = Tensor::tril2(d_out, candle_core::DType::F64, &device).unwrap();
-    println!("{triu}\n{tril}");
-    let inf = (triu * std::f64::INFINITY).unwrap();
-    println!("{inf}");
-
 }
