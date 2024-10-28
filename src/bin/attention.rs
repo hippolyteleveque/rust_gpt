@@ -1,6 +1,6 @@
 use candle_core::{Device, Module, Tensor};
 use candle_nn::ops;
-use rust_gpt::attention::{self, CausalSelfAttention, SelfAttentionV1, SelfAttentionV2};
+use rust_gpt::attention::{self, CausalSelfAttention, MultiHeadAttentionWrapper, SelfAttentionV1, SelfAttentionV2};
 
 fn main() {
     let device = Device::Cpu;
@@ -82,5 +82,9 @@ fn main() {
 
     let causal_attention = CausalSelfAttention::new(d_in, d_out, 6, 0.5, false);
     let out = causal_attention.forward(&xs).unwrap();
+    println!("{out}");
+
+    let multi_head = MultiHeadAttentionWrapper::new(d_in, d_out, 6, 0.5f32, 2, true);
+    let out = multi_head.forward(&xs).unwrap();
     println!("{out}");
 }

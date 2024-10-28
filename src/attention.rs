@@ -109,7 +109,7 @@ impl CausalSelfAttention {
             q,
             k,
             v,
-            context_length
+            context_length,
         }
     }
 }
@@ -129,5 +129,40 @@ impl Module for CausalSelfAttention {
         let tmp = ops::dropout(&tmp, self.dropout_rate)?;
         let out = tmp.matmul(&v).unwrap();
         Ok(out)
-    } 
+    }
+}
+
+pub struct MultiHeadAttentionWrapper {
+    heads: Vec<CausalSelfAttention>,
+}
+
+impl MultiHeadAttentionWrapper {
+    pub fn new(
+        d_in: usize,
+        d_out: usize,
+        context_length: usize,
+        dropout: f32,
+        num_heads: usize,
+        qkv_bias: bool,
+    ) -> MultiHeadAttentionWrapper {
+        let mut heads = Vec::with_capacity(num_heads);
+        for i in 0..num_heads {
+            heads.push(CausalSelfAttention::new(d_in, d_out, context_length, dropout, qkv_bias));
+        }
+        MultiHeadAttentionWrapper { heads }
+    }
+}
+
+impl Module for MultiHeadAttentionWrapper {
+    fn forward(&self, xs: &Tensor) -> Result<Tensor> {
+        let size = self.heads.len();
+        let mut res = Vec::with_capacity(size);
+        for i in 0..size {
+            let z = self.heads[i].forward(xs)?;
+            res.push(z);
+        }
+        let last_dim = res[0].shape().dims().len();
+        let out = Tensor::cat(&res[..], last_dim - 1)?;
+        Ok(out)
+    }
 }
