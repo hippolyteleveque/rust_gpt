@@ -116,16 +116,26 @@ impl CausalSelfAttention {
 
 impl Module for CausalSelfAttention {
     fn forward(&self, xs: &Tensor) -> Result<Tensor> {
+        let dims = xs.shape().dims();
+        assert_eq!(dims.len(), 3);
+        let [b, num_tokens]= [dims[0], dims[1]];
+        let last_dim = dims.len() - 1;
         let q = self.q.forward(xs)?;
         let v = self.v.forward(xs)?;
         let k = self.k.forward(xs)?;
-        let tmp = q.matmul(&k.transpose(0, 1)?)?;
+        let tmp = q.matmul(&k.transpose(1, 2)?)?;
         let tmp = (tmp / (self.d_out as f64).powf(0.5))?;
-        let tmp = ops::softmax(&tmp, 1)?;
-        let tril = Tensor::tril2(self.context_length, candle_core::DType::F64, &Device::Cpu)?;
+        let tmp = ops::softmax(&tmp, last_dim)?;
+
+        let tril = Tensor::tril2(num_tokens, candle_core::DType::F64, &Device::Cpu)?;
+
+        println!("LOL");
         let tmp = (tmp * tril)?;
-        let sum_rows = tmp.sum(1)?;
+
+        let sum_rows = tmp.sum(last_dim)?;
+
         let tmp = tmp.broadcast_div(&sum_rows)?;
+
         let tmp = ops::dropout(&tmp, self.dropout_rate)?;
         let out = tmp.matmul(&v).unwrap();
         Ok(out)

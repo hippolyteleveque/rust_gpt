@@ -80,11 +80,23 @@ fn main() {
 
     // println!("{tmp}");
 
+    // let causal_attention = CausalSelfAttention::new(d_in, d_out, 6, 0.5, false);
+    // let out = causal_attention.forward(&xs).unwrap();
+    // println!("{out}");
+
+    // let multi_head = MultiHeadAttentionWrapper::new(d_in, d_out, 6, 0.5f32, 2, true);
+    // let out = multi_head.forward(&xs).unwrap();
+    // println!("{out}");
+
+    let inputs = vec![
+        0.43, 0.15, 0.89, 0.55, 0.87, 0.66, 0.57, 0.85, 0.64, 0.22, 0.58, 0.33, 0.77, 0.25, 0.10,
+        0.05, 0.80, 0.55,
+    ];
+    let inputs = Tensor::from_vec(inputs, (1, 6, 3), &device).unwrap();
     let causal_attention = CausalSelfAttention::new(d_in, d_out, 6, 0.5, false);
-    let out = causal_attention.forward(&xs).unwrap();
+    println!("{inputs}");
+    let out = causal_attention.forward(&inputs).unwrap();
     println!("{out}");
 
-    let multi_head = MultiHeadAttentionWrapper::new(d_in, d_out, 6, 0.5f32, 2, true);
-    let out = multi_head.forward(&xs).unwrap();
-    println!("{out}");
+
 }
