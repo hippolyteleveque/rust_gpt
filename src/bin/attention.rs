@@ -1,6 +1,6 @@
 use candle_core::{Device, Module, Tensor};
 use candle_nn::ops;
-use rust_gpt::attention::{self, CausalSelfAttention, MultiHeadAttentionWrapper, SelfAttentionV1, SelfAttentionV2};
+use rust_gpt::attention::{self, CausalSelfAttention, SelfAttentionV1, SelfAttentionV2};
 
 fn main() {
     let device = Device::Cpu;
@@ -30,9 +30,9 @@ fn main() {
 
     let d_in = inputs.shape().dims()[1];
     let d_out: usize = 2;
-    let mut Wq = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
-    let mut Wk = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
-    let mut Wv = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
+    let Wq = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
+    let Wk = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
+    let Wv = Tensor::randn(0f64, 1f64, (d_in, d_out), &device).unwrap();
 
     let Q = inputs.matmul(&Wq).unwrap();
     let K = inputs.matmul(&Wk).unwrap();
