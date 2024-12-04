@@ -33,7 +33,7 @@ impl SimpleTokenizerV1 {
 
         let mut preprocessed = Vec::new();
         let mut left = 0;
-        for m in re.find_iter(&text) {
+        for m in re.find_iter(text) {
             let start = m.start();
             let end = m.end();
             if text[left..start].trim() != "" {
@@ -50,7 +50,7 @@ impl SimpleTokenizerV1 {
                 *self
                     .tok_to_ix
                     .get(*token)
-                    .expect(&format!("Failed to find token: {:?}", token))
+                    .unwrap_or_else(|| panic!("Failed to find token: {:?}", token))
             })
             .collect();
         res
@@ -98,7 +98,7 @@ impl SimpleTokenizerV2 {
 
         let mut preprocessed = Vec::new();
         let mut left = 0;
-        for m in re.find_iter(&text) {
+        for m in re.find_iter(text) {
             let start = m.start();
             let end = m.end();
             if text[left..start].trim() != "" {

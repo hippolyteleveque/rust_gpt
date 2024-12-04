@@ -1,4 +1,3 @@
-use std::fmt::Error;
 
 use candle_core::{Device, Tensor};
 use candle_nn::{Embedding, Module};

@@ -1,6 +1,6 @@
 use candle_core::{Device, Tensor};
 use candle_nn::{Embedding, Module};
-use rust_gpt::dataset::{self, GPTDatasetV1};
+use rust_gpt::dataset::{self};
 use std::fs;
 use tiktoken_rs::r50k_base;
 fn main() {

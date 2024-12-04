@@ -1,11 +1,9 @@
-use ai_dataloader::indexable::DataLoader;
 use candle_core::{Device, Tensor};
 use tiktoken_rs::CoreBPE;
 // use ai_dataloader::indexable::DataLoader;
 // use ai_dataloader::collate::{DefaultCollate, Collate};
 use candle_core::Error;
 use candle_datasets::{Batcher, batcher::IterResult2};
-use std::vec::IntoIter;
 use tiktoken_rs::r50k_base;
 pub struct GPTDatasetV1 {
     tokenizer: CoreBPE,
@@ -25,11 +23,11 @@ impl GPTDatasetV1 {
             let target_chunk = &token_ids[i + 1..i + max_length + 1];
             input_ids.push(
                 // Tensor::from_vec(input_chunk.to_vec(), (1, max_length), &Device::Cpu).unwrap(),
-                Tensor::from_vec(input_chunk.to_vec(), (max_length), &Device::Cpu).unwrap(),
+                Tensor::from_vec(input_chunk.to_vec(), max_length, &Device::Cpu).unwrap(),
             );
             target_ids.push(
                 // Tensor::from_vec(target_chunk.to_vec(), (1, max_length), &Device::Cpu).unwrap(),
-                Tensor::from_vec(target_chunk.to_vec(), (max_length), &Device::Cpu).unwrap(),
+                Tensor::from_vec(target_chunk.to_vec(), max_length, &Device::Cpu).unwrap(),
             );
             i += stride;
         }
@@ -61,7 +59,7 @@ impl IntoIterator for GPTDatasetV1 {
     fn into_iter(self) -> Self::IntoIter {
         self.input_ids
             .into_iter()
-            .zip(self.target_ids.into_iter())
+            .zip(self.target_ids)
             .map(|(input_ids, target_ids)| Ok((input_ids, target_ids)))
     }
 }
@@ -82,7 +80,7 @@ pub fn create_dataloader_v1(
     let tokenizer = r50k_base().unwrap();
     let dataset = GPTDatasetV1::new(txt, tokenizer, max_length, stride);
     // let mut dataloader = DataLoader::builder(dataset).batch_size(batch_size);
-    let dataloader = Batcher::new_r2(dataset.into_iter()).batch_size(batch_size);
+    
     // for res in dataloader {
     //     match res {
     //         Ok((inputs, targets)) => {
@@ -94,5 +92,5 @@ pub fn create_dataloader_v1(
     //     }
     //     println!("\n")
     // } // not shuffled and last iter is not dropped but it works
-    dataloader
+    Batcher::new_r2(dataset.into_iter()).batch_size(batch_size)
 }

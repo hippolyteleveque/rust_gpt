@@ -1,6 +1,6 @@
 use regex::Regex;
 use rust_gpt::dataset::create_dataloader_v1;
-use rust_gpt::tokenizer::{SimpleTokenizerV1, SimpleTokenizerV2};
+use rust_gpt::tokenizer::SimpleTokenizerV2;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use tiktoken_rs::r50k_base;
@@ -16,7 +16,7 @@ fn main() {
 
     let mut words = Vec::new();
     let mut left = 0;
-    for m in re.find_iter(&text) {
+    for m in re.find_iter(text) {
         let start = m.start();
         let end = m.end();
         if text[left..start].trim() != "" {
@@ -79,7 +79,7 @@ fn main() {
 
     let text1 = "Hello, do you like tea?";
     let text2 = "In the sunlit terraces of the palace.";
-    let text = vec![text1, text2].join(" <|endoftext|> ");
+    let text = [text1, text2].join(" <|endoftext|> ");
     println!("{text}");
 
     let tokenizer = SimpleTokenizerV2::new(vocab);
